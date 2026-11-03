@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Бот eXpress · Remnawave Admin{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Бот для eXpress Messenger</h1>
+  <span class="badge {{ 'ok' if config.enabled else 'off' }}">
+    <span class="d"></span>{{ 'включён' if config.enabled else 'выключен' }}</span>
+</div>
+
+<div class="note-box">
+  <b>Как подключить (по докам eXpress BotX):</b><br>
+  1. В eXpress создайте бота через <b>@BotX</b> (Chatbot) — получите <span class="mono">Bot ID</span>
+  и <span class="mono">Secret</span> (в карточке бота в BotX).<br>
+  2. В форме ниже укажите CTS URL, Bot ID, Secret — и сохраните. Secret шифруется в БД (Fernet).<br>
+  3. <b>Доступ:</b> бот отвечает только HUID из списка «Доверенные чаты» (по одному на строку).
+  Оставить список пустым — значит запретить всем (безопаснее по умолчанию).<br>
+  Webhook-адрес бота: <span class="mono">https://&lt;ваш-домен&gt;/botx/command</span> —
+  впишите его как callback в BotX (настройки бота → webhook).
+</div>
+
+<div class="grid cols-2">
+  <div class="panel">
+    <h2 class="sec">Конфигурация</h2>
+    <form method="post" action="/api/bot/config" hx-post="/api/bot/config" hx-target="body" hx-swap="none">
+      <div class="field">
+        <label>CTS URL</label>
+        <input class="input" name="cts_url" value="{{ config.cts_url or '' }}" placeholder="https://cts.express.ms">
+        <div class="hint">Для eXpress по умолчанию <span class="mono">https://cts.express.ms</span>.</div>
+      </div>
+      <div class="field">
+        <label>Bot ID (UUID)</label>
+        <input class="input mono" name="bot_id" value="{{ config.bot_id or '' }}" placeholder="00000000-0000-0000-0000-000000000000">
+      </div>
+      <div class="field">
+        <label>Secret</label>
+        <input class="input mono" name="secret" type="password" autocomplete="new-password"
+               value="" placeholder="{{ 'заполнено (оставьте пустым, чтобы не менять)' if config.secret_set else 'не задан' }}">
+        <div class="hint">Секрет не выгружается. Впишите только если нужно заменить.</div>
+      </div>
+      <div class="field">
+        <label>Доверенные чаты (HUID, по одному на строку; пусто = запрещён всем)</label>
+        <textarea class="input" name="allowed_huids" rows="4">{{ (config.huids or [])|join('\n') }}</textarea>
+      </div>
+      <label style="display:flex;gap:8px;align-items:center;color:var(--muted);font-size:.86rem;margin-bottom:14px">
+        <input type="checkbox" name="enabled" value="on" {{ 'checked' if config.enabled }}> бот включён
+      </label>
+      <button class="btn primary" type="submit">Сохранить</button>
+    </form>
+  </div>
+
+  <div class="panel">
+    <h2 class="sec">Команды бота</h2>
+    <dl class="kv">
+      <dt>/status</dt><dd>состояние нод панели</dd>
+      <dt>/users [поиск]</dt><dd>первые пользователи</dd>
+      <dt>/user &lt;имя&gt;</dt><dd>карточка пользователя</dd>
+      <dt>/traffic &lt;имя&gt;</dt><dd>трафик пользователя</dd>
+      <dt>/nodes &lt;ip|имя&gt;</dt><dd>детали ноды</dd>
+      <dt>/help</dt><dd>помощь</dd>
+    </dl>
+    <div class="divider"></div>
+    <h2 class="sec">Последние обращения</h2>
+    <div id="bot-events">{{ bot_frag|safe }}</div>
+  </div>
+</div>
+{% endblock %}

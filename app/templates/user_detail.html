@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}{{ data.get('username','Пользователь') }} · Remnawave Admin{% endblock %}
+{% block content %}
+{% set name = data.get('username', 'Пользователь') %}
+<div class="page-head">
+  <h1>{{ name }}</h1>
+  {% if can %}<a class="btn sm" href="/users">← назад</a>{% else %}<a class="btn sm" href="/users">← назад</a>{% endif %}
+</div>
+
+{% if state == 'not_configured' %}
+  <div class="note-box">Панель Remnawave не настроена.</div>
+{% elif state == 'error' %}
+  <div class="err-box">Ошибка: {{ error }}</div>
+{% else %}
+{% set uact = data.get('status', 0) %}
+{% set tl = data.get('trafficLimit', data.get('traffic_limit', 0)) %}
+{% set mad = data.get('maxActiveDevices', data.get('max_active_devices')) %}
+<div class="grid cols-2">
+  <div class="panel">
+    <h2 class="sec">Профиль</h2>
+    <dl class="kv">
+      <dt>Статус</dt>
+      <dd>{% if uact in (1, true) %}<span class="badge ok"><span class="d"></span>активен</span>
+          {% else %}<span class="badge off"><span class="d"></span>выключен</span>{% endif %}</dd>
+      <dt>UUID</dt><dd>{{ data.get('uuid') }}</dd>
+      <dt>Действует до</dt><dd>{{ (data.get('expireAt', data.get('expire_at')) or 'бессрочно')|pdate or 'бессрочно' }}</dd>
+      <dt>Лимит трафика</dt><dd>{{ tl|human_bytes if tl else 'безлимит' }}</dd>
+      <dt>Устройства</dt><dd>{{ mad if mad is not none else '—' }}</dd>
+      <dt>Подписка</dt>
+      <dd>
+        {% if sub %}<a href="{{ sub }}" target="_blank" rel="noopener">{{ sub|length > 48 and (sub[:48] ~ '…') or sub }}</a>
+        {% elif can %}не получена
+        {% else %}<span class="muted">только для ролей operator/admin</span>{% endif %}
+      </dd>
+    </dl>
+    {% if sub %}
+    <div class="divider"></div>
+    <div class="code" id="sub-url">{{ sub }}</div>
+    <div class="btnrow" style="margin-top:10px">
+      <button class="btn sm copy" data-copy="#sub-url" type="button">Скопировать ссылку</button>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="panel">
+    <h2 class="sec">Действия</h2>
+    {% if can %}
+    <div class="btnrow" style="flex-direction:column; align-items:stretch">
+      <form method="post" action="/api/user/{{ data.get('uuid') }}/enable" hx-post="/api/user/{{ data.get('uuid') }}/enable" hx-target="body" hx-swap="none">
+        <button class="btn" type="submit">Включить</button></form>
+      <form method="post" action="/api/user/{{ data.get('uuid') }}/disable" data-confirm="Выключить пользователя?" hx-post="/api/user/{{ data.get('uuid') }}/disable" hx-target="body" hx-swap="none">
+        <button class="btn" type="submit">Выключить</button></form>
+      <form method="post" action="/api/user/{{ data.get('uuid') }}/reset-traffic" data-confirm="Сбросить трафик пользователя?" hx-post="/api/user/{{ data.get('uuid') }}/reset-traffic" hx-target="body" hx-swap="none">
+        <button class="btn" type="submit">Сбросить трафик</button></form>
+      <form method="post" action="/api/user/{{ data.get('uuid') }}/revoke" data-confirm="Отозвать подписку? Клиентам придётся обновить подписку из новых ссылок." hx-post="/api/user/{{ data.get('uuid') }}/revoke" hx-target="body" hx-swap="none">
+        <button class="btn danger" type="submit">Отозвать подписку</button></form>
+    </div>
+    <div class="divider"></div>
+    <form class="btnrow" method="post" action="/api/user/{{ data.get('uuid') }}/extend" hx-post="/api/user/{{ data.get('uuid') }}/extend" hx-target="body" hx-swap="none">
+      <input class="input" style="width:110px" name="days" value="1" min="1" max="3650" title="Дней продления">
+      <button class="btn" type="submit">Продлить на N дн.</button>
+    </form>
+    <div class="divider"></div>
+    <details>
+      <summary class="muted small" style="cursor:pointer">Редактировать профиль</summary>
+      <form method="post" action="/api/user/{{ data.get('uuid') }}" hx-post="/api/user/{{ data.get('uuid') }}" hx-target="body" hx-swap="none" style="margin-top:10px">
+        <div class="field">
+          <label>Имя</label>
+          <input class="input" name="username" required value="{{ data.get('username','') }}">
+        </div>
+        <div class="form-grid">
+          <div class="field"><label>Действует до (необяз.)</label>
+            <input class="input" type="datetime-local" name="expire_at" value="{{ (data.get('expireAt', data.get('expire_at')) or '')[:16] }}"></div>
+          <div class="field"><label>Устройств (max)</label>
+            <input class="input" type="number" name="max_active_devices" min="1" value="{{ (mad if mad is not none else 1) or 1 }}"></div>
+          <div class="field" style="grid-column:1/-1"><label>Лимит трафика, ГБ (0 = безлимит)</label>
+            <input class="input" type="number" name="traffic_limit_gb" min="0" step="1" value="{{ '%.0f'|format((tl or 0)/1073741824) if tl else 0 }}"></div>
+        </div>
+        <button class="btn primary" type="submit">Сохранить</button>
+      </form>
+    </details>
+    <div class="divider"></div>
+    <form method="post" action="/api/user/{{ data.get('uuid') }}/delete" data-confirm="Удалить пользователя {{ name }} безвозвратно?" hx-post="/api/user/{{ data.get('uuid') }}/delete" hx-target="body" hx-swap="none">
+      <button class="btn danger" type="submit">Удалить пользователя</button></form>
+    {% else %}
+    <p class="muted small">У вашей роли нет прав на управление пользователями (operator/admin).</p>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,11 @@
+{% if error %}
+<div class="err-box">{{ error }}</div>
+{% else %}
+<div class="panel tight" style="margin-top:10px">
+  <div class="flash ok">Новый пароль для <b>{{ username }}</b> (сообщите ему лично):</div>
+  <div class="code" id="resetpw-raw">{{ password }}</div>
+  <div class="btnrow" style="margin-top:10px">
+    <button class="btn sm copy" data-copy="#resetpw-raw" type="button">Скопировать</button>
+  </div>
+</div>
+{% endif %}

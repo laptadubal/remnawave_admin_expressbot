@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Ноды · Remnawave Admin{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Ноды</h1>
+  <span class="sub">состояние и трафик узлов панели</span>
+</div>
+
+{% if state == 'not_configured' %}
+<div class="note-box">
+  Панель Remnawave не настроена. Заполните <span class="mono">REMNAWAVE_BASE_URL</span>
+  и (токен <span class="mono">REMNAWAVE_API_TOKEN</span> либо логин/пароль) в файле
+  <span class="mono">.env</span> рядом с docker-compose.yml, затем перезапустите контейнер:
+  <div class="code" style="margin-top:8px">REMNAWAVE_BASE_URL=https://&lt;домен панели&gt;
+REMNAWAVE_API_TOKEN=&lt;токен из Settings → API Tokens&gt;
+docker compose up -d</div>
+</div>
+{% elif state == 'error' %}
+<div class="err-box">Ошибка панели: {{ error }}</div>
+{% endif %}
+
+{% if state == 'ok' %}
+{% set ns = namespace(online=0) %}
+{% for nd in nodes %}{% if nd.get('isConnected', nd.get('is_connected', false)) %}{% set ns.online = ns.online + 1 %}{% endif %}{% endfor %}
+<div class="grid cols-4" style="margin-bottom:16px">
+  <div class="panel card"><div class="label">Всего нод</div><div class="num">{{ nodes|length }}</div></div>
+  <div class="panel card accent"><div class="label">В сети</div><div class="num">{{ ns.online }}</div></div>
+  <div class="panel card"><div class="label">Пользователей</div><div class="num">{{ users_total if users_total is not none else '—' }}</div></div>
+  <div class="panel card"><div class="label">Доступ к панели</div><div class="num small" style="font-size:1rem">{{ 'API-токен' if mode=='token' else 'логин' if mode=='login' else '—' }}</div></div>
+</div>
+
+<div class="tbl-wrap">
+  <table class="tbl">
+    <thead><tr><th>Нода</th><th>Адрес</th><th>Страна</th><th>Статус</th><th>Трафик</th><th></th></tr></thead>
+    <tbody>
+    {% for nd in nodes %}
+      {% set conn = nd.get('isConnected', nd.get('is_connected', false)) %}
+      {% set dis = nd.get('isDisabled', nd.get('is_disabled', false)) %}
+      <tr class="click" onclick="location.href='/nodes/{{ nd.get('uuid') }}'">
+        <td><b>{{ nd.get('name') }}</b></td>
+        <td class="mono">{{ nd.get('address') }}:{{ nd.get('port') }}</td>
+        <td>{{ nd.get('countryCode', nd.get('country_code', '—')) or '—' }}</td>
+        <td>
+          {% if conn %}<span class="badge ok"><span class="d"></span>в сети</span>
+          {% elif dis %}<span class="badge off"><span class="d"></span>выключена</span>
+          {% else %}<span class="badge down"><span class="d"></span>не в сети</span>{% endif %}
+        </td>
+        <td class="mono">{{ (nd.get('trafficUsedBytes', nd.get('traffic_used_bytes', 0)) or 0)|human_bytes }}</td>
+        <td><a href="/nodes/{{ nd.get('uuid') }}">открыть →</a></td>
+      </tr>
+    {% else %}
+      <tr><td colspan="6"><div class="empty">Нод в панели нет</div></td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}

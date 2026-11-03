@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Новый пользователь · Remnawave Admin{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Новый пользователь</h1><a class="btn sm" href="/users">← назад</a></div>
+<div class="panel" style="max-width:640px">
+  <form hx-post="/api/user" hx-target="body" hx-swap="none">
+    <div class="field">
+      <label for="username">Имя (3–36 символов: буквы, цифры, _ и -)</label>
+      <input class="input" id="username" name="username" required minlength="3" maxlength="36" placeholder="ivan_ov">
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label for="expire_at">Действует до (пусто = бессрочно)</label>
+        <input class="input" id="expire_at" type="datetime-local" name="expire_at">
+      </div>
+      <div class="field">
+        <label for="mad">Максимум устройств</label>
+        <input class="input" id="mad" type="number" name="max_active_devices" min="1" value="1">
+      </div>
+      <div class="field" style="grid-column:1/-1">
+        <label for="tl">Лимит трафика, ГБ (0 = безлимит)</label>
+        <input class="input" id="tl" type="number" name="traffic_limit_gb" min="0" step="1" value="0">
+      </div>
+    </div>
+    <div class="btnrow">
+      <button class="btn primary" type="submit">Создать</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

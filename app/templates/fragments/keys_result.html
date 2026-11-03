@@ -1,0 +1,11 @@
+{% if error %}
+<div class="err-box">{{ error }}</div>
+{% elif raw %}
+<div class="panel tight">
+  <div class="btnrow" style="margin-bottom:10px">
+    <span class="muted small">Сгенерированный ключ:</span>
+    <button class="btn sm copy" data-copy="#key-raw" type="button">Скопировать</button>
+  </div>
+  <div class="code" id="key-raw">{{ raw }}</div>
+</div>
+{% endif %}

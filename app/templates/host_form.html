@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Новый хост · Remnawave Admin{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Новый хост</h1><a class="btn sm" href="/hosts">← назад</a></div>
+<div class="panel" style="max-width:640px">
+  <form hx-post="/api/host" hx-target="body" hx-swap="none">
+    <div class="field">
+      <label for="name">Имя</label>
+      <input class="input" id="name" name="name" required maxlength="255" placeholder="ru-moscow">
+    </div>
+    <div class="form-grid">
+      <div class="field"><label for="host">Адрес (домен или IP)</label>
+        <input class="input" id="host" name="host" required placeholder="1.2.3.4 или cdn.example.com"></div>
+      <div class="field"><label for="port">Порт</label>
+        <input class="input" id="port" type="number" name="port" value="443"></div>
+      <div class="field" style="grid-column:1/-1"><label for="proto">Протокол</label>
+        <select class="input" id="proto" name="protocol">
+          <option value="vless" selected>VLESS</option><option value="vmess">VMess</option>
+          <option value="shadowsocks">Shadowsocks</option><option value="trojan">Trojan</option>
+          <option value="hysteria">Hysteria</option><option value="tuic">Tuic</option>
+          <option value="socks5">Socks5</option><option value="http">HTTP/S</option><option value="wireguard">WireGuard</option>
+        </select></div>
+    </div>
+    <label style="display:flex;gap:8px;align-items:center;color:var(--muted);font-size:.86rem;margin-bottom:14px">
+      <input type="checkbox" name="is_default" value="on" checked> хост по умолчанию для новых пользователей
+    </label>
+    <button class="btn primary" type="submit">Добавить</button>
+  </form>
+</div>
+{% endblock %}

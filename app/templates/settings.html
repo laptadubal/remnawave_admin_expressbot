@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Настройки · Remnawave Admin{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Настройки</h1></div>
+<div class="grid cols-2">
+  <div class="panel">
+    <h2 class="sec">Соединение с панелью Remnawave</h2>
+    <dl class="kv">
+      <dt>База</dt><dd>{{ base_url or '—' }}</dd>
+      <dt>Аутентификация</dt>
+      <dd>{{ 'API-токен' if has_token else ('логин/пароль' if has_login else 'не задана') }}</dd>
+      <dt>Статус</dt>
+      <dd>{% if base_url %}
+        <span class="badge ok"><span class="d"></span>настроена</span>
+      {% else %}
+        <span class="badge off"><span class="d"></span>не настроена</span>{% endif %}</dd>
+    </dl>
+    <div class="divider"></div>
+    <p class="muted small">Значения задаются в <span class="mono">.env</span> рядом с
+      <span class="mono">docker-compose.yml</span> и подхватываются при старте контейнера:
+      <span class="mono">REMNAWAVE_BASE_URL</span>,
+      <span class="mono">REMNAWAVE_API_TOKEN</span> или
+      <span class="mono">REMNAWAVE_USERNAME</span>/<span class="mono">REMNAWAVE_PASSWORD</span>.<br>
+      После правки: <span class="mono">docker compose up -d</span>.</p>
+  </div>
+  <div class="panel">
+    <h2 class="sec">Об админке</h2>
+    <dl class="kv">
+      <dt>Версия</dt><dd>{{ version }}</dd>
+      <dt>Роли</dt><dd>viewer · operator · bot_admin · admin</dd>
+      <dt>Хранение</dt><dd>SQLite в volume <span class="mono">./data</span></dd>
+      <dt>Бот</dt><dd>pybotx / eXpress BotX</dd>
+    </dl>
+    <div class="divider"></div>
+    <p class="muted small">Сессии живут 12 часов (скользящее продление). Все действия — в журнале
+      («Аудит»). Вы: <b>{{ user.username }}</b>, роль {{ role_titles.get(user.role, user.role) }}.</p>
+    <div class="btnrow" style="margin-top:12px">
+      <a class="btn sm ghost" href="/healthz" target="_blank">/healthz</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

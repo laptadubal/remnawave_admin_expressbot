@@ -1,0 +1,21 @@
+services:
+  admin:
+    build: .
+    image: remnawave-admin:latest
+    container_name: remnawave-admin
+    restart: unless-stopped
+    ports:
+      - "${ADMIN_PORT:-8090}:8000"
+    environment:
+      TZ: "${TZ:-Europe/Moscow}"
+      SECRET_KEY: "${SECRET_KEY:-}"
+      ADMIN_USERNAME: "${ADMIN_USERNAME:-admin}"
+      ADMIN_PASSWORD: "${ADMIN_PASSWORD:-}"
+      SESSION_HOURS: "${SESSION_HOURS:-12}"
+      REMNAWAVE_BASE_URL: "${REMNAWAVE_BASE_URL:-}"
+      REMNAWAVE_API_TOKEN: "${REMNAWAVE_API_TOKEN:-}"
+      REMNAWAVE_USERNAME: "${REMNAWAVE_USERNAME:-}"
+      REMNAWAVE_PASSWORD: "${REMNAWAVE_PASSWORD:-}"
+      LOG_LEVEL: "${LOG_LEVEL:-INFO}"
+    volumes:
+      - ./data:/data

@@ -1,0 +1,26 @@
+<div class="tbl-wrap">
+  <table class="tbl" style="min-width:auto">
+    <thead><tr><th>Время (UTC)</th><th>Чат HUID</th><th>Команда</th><th>Статус</th></tr></thead>
+    <tbody>
+    {% for ev in events %}
+      <tr>
+        <td class="mono">{{ ev.ts|pdate }}</td>
+        <td class="mono">{{ ev.huid or '—' }}</td>
+        <td>{{ ev.command }}{% if ev.argument %} <span class="dim">{{ ev.argument[:60] }}</span>{% endif %}</td>
+        <td>
+          {% if ev.status == 'ok' %}<span class="badge ok">ok</span>
+          {% elif ev.status == 'denied' %}<span class="badge off">denied</span>
+          {% else %}<span class="badge down">{{ ev.status or 'error' }}</span>{% endif %}
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="4"><div class="empty">Пока пусто — бот ещё не получал команд</div></td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% if events and limit < 100 %}
+<div class="btnrow" style="margin-top:10px">
+  <a class="btn xs" hx-get="/api/frag/bot-events?limit={{ limit + 30 }}" hx-target="#bot-events" hx-swap="innerHTML">ещё →</a>
+</div>
+{% endif %}

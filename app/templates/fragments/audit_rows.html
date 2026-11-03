@@ -1,0 +1,33 @@
+<div class="tbl-wrap">
+  <table class="tbl">
+    <thead><tr><th>Время (UTC)</th><th>Кто</th><th>Роль</th><th>IP</th><th>Операция</th><th>Статус</th><th>Детали</th></tr></thead>
+    <tbody>
+    {% for row in rows %}
+      <tr>
+        <td class="mono">{{ row.ts|pdate }}</td>
+        <td><b>{{ row.actor or '—' }}</b></td>
+        <td>{{ row.role or '—' }}</td>
+        <td class="mono">{{ row.ip or '—' }}</td>
+        <td>{{ row.method }} <span class="mono">{{ row.path }}</span>
+          {% if row.target %}<div class="dim small">{{ row.target[:80] }}</div>{% endif %}
+        </td>
+        <td>
+          {% if row.status in ('ok','accepted') %}<span class="badge ok">{{ row.status }}</span>
+          {% elif row.status in ('denied',) %}<span class="badge off">{{ row.status }}</span>
+          {% else %}<span class="badge down">{{ row.status }}</span>{% endif %}
+        </td>
+        <td class="small" style="max-width:300px;word-break:break-word">{{ (row.detail or '')[:300] }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="7"><div class="empty">Записей нет</div></td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% if rows and limit < 500 %}
+<div class="btnrow" style="margin-top:10px">
+  <a class="btn sm"
+     hx-get="/api/frag/audit?limit={{ limit * 2 }}{{ '&category=' ~ request.query_params.get('category','') if request.query_params.get('category') }}{{ '&user_q=' ~ request.query_params.get('user_q','') if request.query_params.get('user_q') }}"
+     hx-target="#audit-wrap" hx-swap="innerHTML">Загрузить ещё ({{ limit }} → {{ limit * 2 }})</a>
+</div>
+{% endif %}

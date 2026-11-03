@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Профили · Remnawave Admin{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Профили конфигурации</h1>
+  {% if can %}<a class="btn sm primary" href="/profiles/new">+ Создать профиль</a>{% endif %}
+</div>
+{% if state == 'not_configured' %}
+  <div class="note-box">Панель Remnawave не настроена.</div>
+{% elif state == 'error' %}
+  <div class="err-box">Ошибка панели: {{ error }}</div>
+{% else %}
+<div class="tbl-wrap">
+  <table class="tbl">
+    <thead><tr><th>Имя</th><th>Протокол</th><th>Порт</th><th>Адрес</th><th>Строка конфигурации</th><th>PIN</th><th>UUID</th></tr></thead>
+    <tbody>
+    {% for p in profiles %}
+      <tr class="click" onclick="location.href='/profiles/{{ p.get('uuid') }}'">
+        <td><b>{{ p.get('name') }}</b></td>
+        <td>{{ {1:'VLESS',2:'VMess',3:'SS',4:'Trojan',5:'Hysteria',6:'Tuic'}.get(p.get('protocol'), '—') }}</td>
+        <td class="mono">{{ p.get('port') }}</td>
+        <td class="mono">{{ p.get('host') }}</td>
+        <td class="mono" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.get('config') }}</td>
+        <td>{{ 'да' if p.get('pin') else '—' }}</td>
+        <td class="mono">{{ p.get('uuid','')[:8] }}…</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="7"><div class="empty">Профилей нет</div></td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Профиль · Remnawave Admin{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>{{ profile.get('name','Профиль не найден') }}</h1>
+  <a class="btn sm" href="/profiles">← все профили</a>
+</div>
+{% if state != 'ok' %}
+  {% if state == 'error' %}<div class="err-box">Ошибка: {{ error }}</div>
+  {% else %}<div class="note-box">Панель не настроена.</div>{% endif %}
+{% else %}
+<div class="panel" style="max-width:100%">
+  <h2 class="sec">Сведения</h2>
+  <dl class="kv">
+    <dt>Протокол</dt><dd>{{ {1:'VLESS',2:'VMess',3:'Shadowsocks',4:'Trojan',5:'Hysteria',6:'Tuic'}.get(profile.get('protocol'), '—') }}</dd>
+    <dt>Хост / порт</dt><dd>{{ profile.get('host') }}:{{ profile.get('port') }}</dd>
+    <dt>PIN</dt><dd>{{ profile.get('pin') or '—' }}</dd>
+    <dt>UUID</dt><dd>{{ profile.get('uuid') }}</dd>
+  </dl>
+  <div class="divider"></div>
+  <h2 class="sec">Строка конфигурации (base64)</h2>
+  <div class="code" id="prof-cfg">{{ profile.get('config','') }}</div>
+  <div class="btnrow" style="margin-top:12px">
+    <button class="btn sm copy" data-copy="#prof-cfg" type="button">Скопировать</button>
+    {% if can %}
+    <form method="post" action="/api/profile/{{ profile.get('uuid') }}/delete" data-confirm="Удалить профиль конфигурации? Ноды, использующие его, перестанут работать." hx-post="/api/profile/{{ profile.get('uuid') }}/delete" hx-target="body" hx-swap="none">
+      <button class="btn sm danger" type="submit">Удалить профиль</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

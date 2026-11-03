@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Доступ · Remnawave Admin{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Управление доступом</h1>
+  <span class="sub">пользователи админки и роли</span>
+</div>
+
+<div class="tbl-wrap" style="margin-bottom:18px">
+  <table class="tbl">
+    <thead><tr><th>Логин</th><th>Роль</th><th>Состояние</th><th>Создан</th><th>Действия</th></tr></thead>
+    <tbody>
+    {% for u in users %}
+      <tr>
+        <td><b>{{ u.username }}</b>{% if u.id == current_id %} <span class="dim small">(это вы)</span>{% endif %}</td>
+        <td>
+          <form class="row-actions" hx-post="/api/access/user/{{ u.id }}/role" hx-target="body" hx-swap="none">
+            <select class="input" name="role" style="width:auto;padding:5px 8px" {{ 'disabled' if u.id == current_id }}>
+              {% for r in roles %}<option value="{{ r }}" {{ 'selected' if u.role == r }}>{{ role_titles.get(r, r) }}</option>{% endfor %}
+            </select>
+            <button class="btn xs" type="submit" {{ 'disabled' if u.id == current_id }}>Роль</button>
+          </form>
+        </td>
+        <td>{% if u.is_active %}<span class="badge ok">активен</span>
+            {% else %}<span class="badge off">заблокирован</span>{% endif %}</td>
+        <td class="mono">{{ u.created_at|pdate }}</td>
+        <td class="row-actions">
+          <form hx-post="/api/access/user/{{ u.id }}/password" hx-target="#pw-result" hx-swap="innerHTML">
+            <button class="btn xs" type="submit">Пароль</button>
+          </form>
+          <form method="post" action="/api/access/user/{{ u.id }}/toggle"
+                data-confirm="{{ 'Заблокировать' if u.is_active else 'Разблокировать' }} «{{ u.username }}»?"
+                hx-post="/api/access/user/{{ u.id }}/toggle" hx-target="body" hx-swap="none">
+            <button class="btn xs" type="submit" {{ 'disabled' if u.id == current_id }}>
+              {{ 'Заблокировать' if u.is_active else 'Включить' }}</button>
+          </form>
+          {% if u.id != current_id %}
+          <form method="post" action="/api/access/user/{{ u.id }}/delete"
+                data-confirm="Удалить пользователя {{ u.username }} безвозвратно?"
+                hx-post="/api/access/user/{{ u.id }}/delete" hx-target="body" hx-swap="none">
+            <button class="btn xs danger" type="submit">Удалить</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+<div id="pw-result"></div>
+
+<div class="panel" style="max-width:560px">
+  <h2 class="sec">Новый пользователь</h2>
+  <form method="post" action="/api/access/user" hx-post="/api/access/user" hx-target="body" hx-swap="none">
+    <div class="field">
+      <label>Логин (3–64 символа)</label>
+      <input class="input" name="username" required minlength="3" maxlength="64" placeholder="sasha">
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label>Пароль (от 8 символов)</label>
+        <input class="input" type="password" name="password" required minlength="8"
+               autocomplete="new-password" id="a1" oninput="syncpw()">
+      </div>
+      <div class="field">
+        <label>Повтор пароля</label>
+        <input class="input" type="password" id="a2" oninput="syncpw()" placeholder="введите ещё раз">
+      </div>
+      <div class="field" style="grid-column:1/-1">
+        <label>Роль</label>
+        <select class="input" name="role">
+          {% for r in roles %}<option value="{{ r }}" {{ 'selected' if r=='viewer' }}>{{ role_titles.get(r, r) }}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+    <button class="btn primary" type="submit">Создать</button>
+  </form>
+</div>
+
+<script>
+function syncpw(){
+  const a1=document.getElementById('a1'), a2=document.getElementById('a2');
+  if(!a1||!a2) return;
+  if(a2.value && a2.value!==a1.value){ a2.setCustomValidity('пароли не совпадают'); }
+  else { a2.setCustomValidity(''); }
+}
+</script>
+{% endblock %}

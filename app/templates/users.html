@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Пользователи · Remnawave Admin{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Пользователи</h1>
+  {% if can_create %}<a class="btn sm primary" href="/users/new">+ Создать</a>{% endif %}
+</div>
+<div class="panel tight" style="margin-bottom:14px">
+  <form>
+    <input class="input" name="search" placeholder="Поиск по имени или uuid (первые 100)"
+      value="{{ request.query_params.get('search','') }}"
+      hx-get="/api/frag/users-table" hx-trigger="input delay:400ms, change"
+      hx-target="#users-table-wrap" hx-swap="innerHTML">
+  </form>
+</div>
+<div id="users-table-wrap">{{ fragment|safe }}</div>
+{% endblock %}

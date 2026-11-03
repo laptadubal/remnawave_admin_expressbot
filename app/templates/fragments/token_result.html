@@ -1,0 +1,12 @@
+{% if token %}
+<div class="panel tight">
+  <h2 class="sec">Токен создан — сохраните его сейчас</h2>
+  <div class="code" id="tok-raw">{{ token }}</div>
+  <div class="btnrow" style="margin-top:10px">
+    <button class="btn sm copy" data-copy="#tok-raw" type="button">Скопировать</button>
+  </div>
+  <p class="muted small" style="margin-top:10px">Панель показывает секретный токен только один раз.</p>
+</div>
+{% elif err %}
+<div class="err-box">{{ err }}</div>
+{% endif %}

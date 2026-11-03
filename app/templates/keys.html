@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Ключи · Remnawave Admin{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Ключи</h1>
+  <span class="sub">генерация ключей через API панели Remnawave</span>
+</div>
+
+{% if state == 'ok' %}
+<div class="grid cols-2">
+  <div class="panel">
+    <h2 class="sec">Генерация ключа</h2>
+    <p class="muted small">Панель генерирует ключ нужного типа (x25519 — для VLESS/Hysteria/Tuic, uuid — для VMess и т.п.).
+      Результат показывается ниже.</p>
+    <form class="btnrow" hx-post="/api/keygen" hx-target="#key-result" hx-swap="innerHTML">
+      <select class="input" name="key_type" style="width:180px">
+        <option value="x25519" selected>X25519</option>
+        <option value="uuid">UUID</option>
+      </select>
+      <button class="btn primary" type="submit">Сгенерировать</button>
+    </form>
+    <div id="key-result" style="margin-top:14px"></div>
+  </div>
+
+  <div class="panel">
+    <h2 class="sec">Подключение к панели</h2>
+    <dl class="kv">
+      <dt>База</dt><dd>{{ base_url or '—' }}</dd>
+      <dt>Статус</dt>
+      <dd><span class="badge ok"><span class="d"></span>настроена</span></dd>
+    </dl>
+    <div class="divider"></div>
+    <p class="muted small">API-токен и логин панели задаются в <span class="mono">.env</span>
+      (см. раздел «Настройки»). Генерируемые ключи используются при создании профилей/нод —
+      вставьте их в поле ключей при настройке входов.</p>
+  </div>
+</div>
+{% else %}
+<div class="note-box">Панель Remnawave не настроена — генерация доступна после заполнения
+  <span class="mono">REMNAWAVE_BASE_URL</span> и токена в <span class="mono">.env</span>.</div>
+{% endif %}
+{% endblock %}

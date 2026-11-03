@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Remnawave Admin{% endblock %}</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='6' fill='%234f8cff'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/app.css">
+<script src="/static/htmx.min.js" defer></script>
+<script src="/static/app.js" defer></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="dot"></span> Remnawave <b>Admin</b></div>
+  <nav class="nav">
+    <a href="/" class="{{ 'active' if active=='dash' }}">Ноды</a>
+    <a href="/users" class="{{ 'active' if active=='users' }}">Пользователи</a>
+    <a href="/hosts" class="{{ 'active' if active=='hosts' }}">Хосты</a>
+    <a href="/profiles" class="{{ 'active' if active=='profiles' }}">Профили</a>
+    <a href="/keys" class="{{ 'active' if active=='keys' }}">Ключи</a>
+    {% if "manage_bot" in perms %}<a href="/bot" class="{{ 'active' if active=='bot' }}">Бот</a>{% endif %}
+    {% if "view_audit" in perms %}<a href="/audit" class="{{ 'active' if active=='audit' }}">Аудит</a>{% endif %}
+    {% if "manage_access" in perms %}<a href="/access" class="{{ 'active' if active=='access' }}">Доступ</a>{% endif %}
+    <a href="/settings" class="{{ 'active' if active=='settings' }}">Настройки</a>
+  </nav>
+  {% if user %}
+  <div class="nav-user">
+    <span>{{ user.username }} · {{ role_titles.get(user.role, user.role) }}</span>
+    <form class="inline" method="post" action="/logout">
+      <button class="btn xs ghost" type="submit">Выйти</button>
+    </form>
+  </div>
+  {% endif %}
+</header>
+<main class="container">
+  {% if flash %}<div class="flash {{ flash.k }}">{{ flash.t }}</div>{% endif %}
+  {% block content %}{% endblock %}
+</main>
+</body>
+</html>

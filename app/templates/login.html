@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Вход · Remnawave Admin</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='6' fill='%234f8cff'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/app.css">
+<script src="/static/app.js" defer></script>
+</head>
+<body>
+<div class="login-wrap">
+  <div class="panel login-card">
+    <div class="brand"><span class="dot"></span> Remnawave <b>Admin</b></div>
+    <div class="flash ok hidden" id="ok"></div>
+    {% if flash and flash.k == 'error' %}<div class="flash error">{{ flash.t }}</div>{% endif %}
+    {% if error %}<div class="flash error">{{ error }}</div>{% endif %}
+    <form method="post" action="/login">
+      <div class="field">
+        <label for="username">Логин</label>
+        <input class="input" id="username" name="username" autocomplete="username" required autofocus>
+      </div>
+      <div class="field">
+        <label for="password">Пароль</label>
+        <input class="input" id="password" name="password" type="password" autocomplete="current-password" required>
+      </div>
+      <button class="btn primary" type="submit" style="width:100%">Войти</button>
+    </form>
+    <footer class="foot">Собственная авторизация · действия журналируются</footer>
+  </div>
+</div>
+</body>
+</html>

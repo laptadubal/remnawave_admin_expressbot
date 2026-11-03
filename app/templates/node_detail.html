@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}{{ node.get('name','Нода') }} · Remnawave Admin{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>{{ node.get('name','Нода не найдена') }}</h1>
+  {% if state == 'ok' %}
+    {% if conn_cls == 'ok' %}<span class="badge ok"><span class="d"></span>{{ conn_label }}</span>
+    {% else %}<span class="badge {{ conn_cls }}"><span class="d"></span>{{ conn_label }}</span>{% endif %}
+  {% endif %}
+  <a class="small" href="/">← все ноды</a>
+</div>
+
+{% if state == 'not_configured' %}
+  <div class="note-box">Панель Remnawave не настроена (REMNAWAVE_BASE_URL пустой).</div>
+{% elif state == 'error' %}
+  <div class="err-box">Ошибка панели: {{ error }}</div>
+{% else %}
+
+<div class="grid cols-2">
+  <div class="panel">
+    <h2 class="sec">Параметры</h2>
+    <dl class="kv">
+      <dt>Адрес</dt><dd>{{ node.get('address') }}:{{ node.get('port') }}</dd>
+      <dt>Страна</dd><dd>{{ node.get('countryCode', node.get('country_code', '—')) or '—' }}</dd>
+      <dt>UUID</dd><dd>{{ node.get('uuid') }}</dd>
+      <dt>Активен</dd><dd>{{ 'да' if not node.get('isDisabled', node.get('is_disabled', false)) else 'выключен' }}</dd>
+      <dt>Подключение</dd><dd>{{ 'да' if node.get('isConnected', node.get('is_connected', false)) else 'нет' }}</dd>
+      <dt>Профиль (uuid)</dd><dd>{{ node.get('activeConfigProfileUuid', node.get('active_config_profile_uuid', '—')) or '—' }}</dd>
+    </dl>
+    <div class="divider"></div>
+    <dl class="kv">
+      <dt>Трафик</dt><dd>{{ (node.get('trafficUsedBytes', node.get('traffic_used_bytes', 0)) or 0)|human_bytes }}</dd>
+      <dt>Лимит</dt><dd>{{ (node.get('trafficLimitBytes', node.get('traffic_limit_bytes', 0)) or 0)|human_bytes if (node.get('trafficLimitBytes', node.get('traffic_limit_bytes', 0)) or 0) else 'безлимит' }}</dd>
+    </dl>
+  </div>
+
+  <div class="panel">
+    <h2 class="sec">Действия {% if not can %}<span class="badge muted">доступ ограничен</span>{% endif %}</h2>
+    {% if can %}
+    <div class="btnrow" style="flex-direction:column; align-items:stretch">
+      <form method="post" action="/api/node/{{ node.get('uuid') }}/enable" hx-post="/api/node/{{ node.get('uuid') }}/enable" hx-target="body" hx-swap="none">
+        <button class="btn" type="submit">Включить ноду</button>
+      </form>
+      <form method="post" action="/api/node/{{ node.get('uuid') }}/disable" data-confirm="Выключить ноду? Клиенты не смогут подключаться к ней." hx-post="/api/node/{{ node.get('uuid') }}/disable" hx-target="body" hx-swap="none">
+        <button class="btn" type="submit">Выключить ноду</button>
+      </form>
+      <form method="post" action="/api/node/{{ node.get('uuid') }}/restart" data-confirm="Перезапустить ноду?" hx-post="/api/node/{{ node.get('uuid') }}/restart" hx-target="body" hx-swap="none">
+        <button class="btn" type="submit">Перезапустить</button>
+      </form>
+      <form method="post" action="/api/node/{{ node.get('uuid') }}/reset-traffic" data-confirm="Сбросить счётчик трафика ноды?" hx-post="/api/node/{{ node.get('uuid') }}/reset-traffic" hx-target="body" hx-swap="none">
+        <button class="btn danger" type="submit">Сбросить трафик</button>
+      </form>
+    </div>
+    {% else %}
+    <p class="muted small">У вашей роли нет прав на управление нодами.</p>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,33 @@
+{% if state == 'not_configured' %}
+<div class="note-box">Панель Remnawave не настроена (REMNAWAVE_BASE_URL пустой в .env).</div>
+{% elif state == 'error' %}
+<div class="err-box">Ошибка панели: {{ error }}</div>
+{% else %}
+<div class="tbl-wrap">
+  <table class="tbl">
+    <thead><tr>
+      <th>Имя</th><th>Действует до</th><th>Лимит</th><th>Устройства</th><th>Статус</th>
+      {% if can_sub %}<th>Подписка</th>{% endif %}<th></th>
+    </tr></thead>
+    <tbody>
+    {% for u in users %}
+      {% set uact = u.get('status', 1) %}
+      {% set mad = u.get('maxActiveDevices', u.get('max_active_devices')) %}
+      <tr class="click" onclick="location.href='/users/{{ u.get('uuid') }}'">
+        <td><b>{{ u.get('username') }}</b></td>
+        <td class="mono">{{ (u.get('expireAt', u.get('expire_at')) or 'бессрочно')|pdate or 'бессрочно' }}</td>
+        <td class="mono">{% set tl = u.get('trafficLimit', u.get('traffic_limit', 0)) %}{{ tl|human_bytes if tl else 'безлимит' }}</td>
+        <td>{{ mad if mad is not none else '—' }}</td>
+        <td>{% if uact in (1, true) %}<span class="badge ok"><span class="d"></span>активен</span>
+            {% else %}<span class="badge off"><span class="d"></span>выключен</span>{% endif %}</td>
+        {% if can_sub %}<td><a href="/users/{{ u.get('uuid') }}">link</a></td>{% endif %}
+        <td><a href="/users/{{ u.get('uuid') }}">→</a></td>
+      </tr>
+    {% else %}
+      <tr><td colspan="7"><div class="empty">Никого не найдено</div></td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% if total %}<p class="small muted" style="margin-top:8px">Показаны первые {{ users|length }} из {{ total }}</p>{% endif %}
+{% endif %}

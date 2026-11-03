@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Новый профиль · Remnawave Admin{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Новый профиль конфигурации</h1><a class="btn sm" href="/profiles">← назад</a></div>
+<div class="note-box" style="max-width:900px">Профиль — шаблон входов xray-нод. Заполняйте по докам Remnawave
+  (настройка ноды: «Configuration Profiles»). Поля: протокол, адрес, порт, параметры входов.</div>
+<div class="panel" style="max-width:880px">
+  <form hx-post="/api/profile" hx-target="body" hx-swap="none">
+    <div class="field">
+      <label for="name">Имя профиля</label>
+      <input class="input" id="name" name="name" required placeholder="vless-mc-ipv4">
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label for="proto">Протокол входов</label>
+        <select class="input" id="proto" name="protocol">
+          <option value="1" selected>VLESS</option><option value="2">VMess</option>
+          <option value="3">Shadowsocks</option><option value="4">Trojan</option>
+          <option value="5">Hysteria</option><option value="6">Tuic</option>
+        </select>
+      </div>
+      <div class="field"><label for="host">Адрес</label>
+        <input class="input" id="host" name="host" required placeholder="1.2.3.4"></div>
+      <div class="field"><label for="port">Порт</label>
+        <input class="input" id="port" type="number" name="port" value="443"></div>
+      <div class="field"><label for="pin">PIN (опц.)</label>
+        <input class="input" id="pin" name="pin" placeholder="для VLESS Reality / Tuic"></div>
+    </div>
+    <div class="field">
+      <label for="cfg">JSON профиля входов (необязательно — по умолчанию пустой набор входов)</label>
+      <textarea class="input" id="cfg" name="config" placeholder='[{"listen":"0.0.0.0","ip_version":"ipv4","sniffing":true}]'></textarea>
+      <div class="hint">Массив inbound-конфигураций xray; см. документацию Remnawave «Node settings».</div>
+    </div>
+    <button class="btn primary" type="submit">Создать профиль</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Хосты · Remnawave Admin{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Хосты</h1>
+  {% if can %}<a class="btn sm primary" href="/hosts/new">+ Добавить</a>{% endif %}
+</div>
+{% if state == 'not_configured' %}
+  <div class="note-box">Панель Remnawave не настроена.</div>
+{% elif state == 'error' %}
+  <div class="err-box">Ошибка панели: {{ error }}</div>
+{% else %}
+<div class="tbl-wrap">
+  <table class="tbl">
+    <thead><tr><th>Имя</th><th>Адрес</th><th>Порт</th><th>Протокол</th><th>По умолчанию</th>{% if can %}<th></th>{% endif %}</tr></thead>
+    <tbody>
+    {% for h in hosts %}
+      <tr>
+        <td><b>{{ h.get('name') }}</b></td>
+        <td class="mono">{{ h.get('host') }}</td>
+        <td class="mono">{{ h.get('port') }}</td>
+        <td>{{ h.get('protocol') or '—' }}</td>
+        <td>{% if h.get('isDefault', h.get('is_default', false)) %}<span class="badge muted">да</span>{% else %}<span class="dim">нет</span>{% endif %}</td>
+        {% if can %}
+        <td class="row-actions">
+          <form method="post" action="/api/host/{{ h.get('uuid') }}/delete" data-confirm="Удалить хост {{ h.get('name') }}?" hx-post="/api/host/{{ h.get('uuid') }}/delete" hx-target="body" hx-swap="none">
+            <button class="btn xs danger" type="submit">Удалить</button>
+          </form>
+        </td>
+        {% endif %}
+      </tr>
+    {% else %}
+      <tr><td colspan="6"><div class="empty">Хостов нет</div></td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}

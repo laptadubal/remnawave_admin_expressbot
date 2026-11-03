@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Аудит · Remnawave Admin{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Журнал действий</h1>
+  <span class="sub">всего записей: {{ count }}</span>
+  <a class="btn sm" href="/api/export/audit.csv" target="_blank">Экспорт CSV</a>
+</div>
+<div class="panel tight" style="margin-bottom:14px">
+  <form class="btnrow">
+    <select class="input" name="category" style="width:auto"
+            hx-get="/api/frag/audit" hx-target="#audit-wrap" hx-swap="innerHTML">
+      <option value="">все категории</option>
+      {% for c in categories %}
+      <option value="{{ c }}" {{ 'selected' if request.query_params.get('category')==c }}>{{ c }}</option>
+      {% endfor %}
+    </select>
+    <input class="input" name="user_q" style="width:180px" placeholder="Кто (логин)"
+      value="{{ request.query_params.get('user_q','') }}">
+    <button class="btn sm" type="submit">Применить</button>
+  </form>
+</div>
+<div id="audit-wrap">{{ fragment|safe }}</div>
+{% endblock %}
