@@ -45,6 +45,7 @@ def short_uuid(v) -> str:
 TEMPLATES.env.filters["human_bytes"] = human_bytes
 TEMPLATES.env.filters["pdate"] = pdate
 TEMPLATES.env.filters["short_uuid"] = short_uuid
+TEMPLATES.env.tests["nodekey"] = lambda key: str(key).startswith("node:")
 
 
 def require_user_or_redirect(request: Request, user):

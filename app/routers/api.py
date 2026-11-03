@@ -13,7 +13,15 @@ from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import JSONResponse, RedirectResponse, StreamingResponse
 
 from ..audit import record
-from ..db import AccessUser, AuditLog, BotConfig, BotEvent, session_factory
+from ..db import (
+    AccessUser,
+    AuditLog,
+    BotConfig,
+    BotEvent,
+    MonitorEvent,
+    MonitorState,
+    session_factory,
+)
 from ..flash import flash_redirect
 from ..page import TEMPLATES, require_user_or_redirect
 from ..remna.client import RemnaError, RemnawaveClient
@@ -116,6 +124,27 @@ async def frag_bot_events(request: Request, user=Depends(get_current_user), limi
         db.close()
     return TEMPLATES.TemplateResponse("fragments/bot_events.html",
                                       {"request": request, "events": events})
+
+
+@router.get("/frag/monitor")
+async def frag_monitor(request: Request, user=Depends(get_current_user), limit: int = 40):
+    """Фрагмент: состояние мониторинга + последние алерты (автообновление)."""
+    redir = require_user_or_redirect(request, user)
+    if redir is not None:
+        return redir
+    if not has_perm(user.role, "manage_bot"):
+        return flash_redirect("/bot", "error", "Раздел «Бот» защищён rolęю bot_admin/admin")
+    limit = max(1, min(limit, 100))
+    db = session_factory()
+    try:
+        events = (
+            db.query(MonitorEvent).order_by(MonitorEvent.id.desc()).limit(limit).all()
+        )
+        states = db.query(MonitorState).all()
+    finally:
+        db.close()
+    return TEMPLATES.TemplateResponse("fragments/monitor.html",
+                                      {"request": request, "events": events, "states": states})
 
 
 @router.post("/keygen")
@@ -473,6 +502,8 @@ async def bot_config_save(
     bot_id: str = Form(""),
     secret: str = Form(""),
     allowed_huids: str = Form(""),
+    monitor_enabled: str = Form("on"),
+    monitor_interval_min: str = Form("5"),
 ):
     denied = _guard(request, user, "manage_bot")
     if denied is not None:
@@ -505,6 +536,13 @@ async def bot_config_save(
         cfg.allowed_huids = "\n".join(
             h.strip() for h in allowed_huids.replace("\r", "").splitlines() if h.strip()
         )
+        cfg.monitor_enabled = monitor_enabled == "on"
+        try:
+            interval = int(monitor_interval_min)
+        except (ValueError, TypeError):
+            interval = 5
+        interval = max(0, min(1440, interval))
+        cfg.monitor_interval_min = interval
         cfg.revision = (cfg.revision or 0) + 1
         db.commit()
     finally:
@@ -515,7 +553,8 @@ async def bot_config_save(
     _audit_ok(request, user, "bot-config", "bot/config",
               detail={"enabled": cfg.enabled, "cts_url": cts_url,
                       "bot_id": bot_id, "secret_changed": bool(secret.strip()),
-                      "huids": len(cfg.allowed_huids.splitlines()) if cfg.allowed_huids else 0})
+                      "huids": len(cfg.allowed_huids.splitlines()) if cfg.allowed_huids else 0,
+                      "monitor": cfg.monitor_enabled, "monitor_interval_min": cfg.monitor_interval_min})
     return flash_redirect("/bot", "ok", "Настройки бота сохранены")
 
 

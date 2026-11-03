@@ -14,6 +14,9 @@
   2. В форме ниже укажите CTS URL, Bot ID, Secret — и сохраните. Secret шифруется в БД (Fernet).<br>
   3. <b>Доступ:</b> бот отвечает только HUID из списка «Доверенные чаты» (по одному на строку).
   Оставить список пустым — значит запретить всем (безопаснее по умолчанию).<br>
+  4. <b>Мониторинг:</b> бот периодически проверяет панель и ноды и сам присылает
+  алерты в те же доверенные чаты: 🔴 нода недоступна / панель недоступна,
+  🟡 отказ авторизации, 🟢 восстановление. Локальные события видны в разделе ниже.
   Webhook-адрес бота: <span class="mono">https://&lt;ваш-домен&gt;/botx/command</span> —
   впишите его как callback в BotX (настройки бота → webhook).
 </div>
@@ -44,6 +47,19 @@
       <label style="display:flex;gap:8px;align-items:center;color:var(--muted);font-size:.86rem;margin-bottom:14px">
         <input type="checkbox" name="enabled" value="on" {{ 'checked' if config.enabled }}> бот включён
       </label>
+      <div class="divider"></div>
+      <h2 class="sec">Мониторинг</h2>
+      <div class="field">
+        <label>Интервал проверки панели и нод, минут (1–1440)</label>
+        <input class="input" type="number" name="monitor_interval_min" min="1" max="1440" step="1"
+               value="{{ config.monitor_interval_min }}">
+        <div class="hint">Бот сам опрашивает панель: недоступность ноды, падение панели,
+          отказ авторизации — алерт придёт в eXpress каждому из «Доверенных чатов».</div>
+      </div>
+      <label style="display:flex;gap:8px;align-items:center;color:var(--muted);font-size:.86rem;margin-bottom:14px">
+        <input type="checkbox" name="monitor_enabled" value="on" {{ 'checked' if config.monitor_enabled }}>
+        мониторинг включён
+      </label>
       <button class="btn primary" type="submit">Сохранить</button>
     </form>
   </div>
@@ -61,6 +77,14 @@
     <div class="divider"></div>
     <h2 class="sec">Последние обращения</h2>
     <div id="bot-events">{{ bot_frag|safe }}</div>
+  </div>
+
+  <div class="panel">
+    <h2 class="sec">События мониторинга <span class="dim" style="font-weight:400;font-size:.78rem">(автообновление 20 c)</span></h2>
+    <div id="monitor-box"
+         hx-get="/api/frag/monitor"
+         hx-trigger="every 20s"
+         hx-swap="innerHTML">{{ monitor_frag|safe }}</div>
   </div>
 </div>
 {% endblock %}

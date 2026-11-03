@@ -90,9 +90,41 @@ class BotConfig(Base):
     secret_enc: Mapped[str] = mapped_column(Text, default="")
     allowed_huids: Mapped[str] = mapped_column(Text, default="")  # по одному HUId в строке
     revision: Mapped[int] = mapped_column(Integer, default=0)
+    monitor_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    monitor_interval_min: Mapped[int] = mapped_column(Integer, default=5)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, onupdate=_utcnow
     )
+
+
+class MonitorState(Base):
+    """Состояние объектов мониторинга (панель, ноды) между проверяющими циклами."""
+
+    __tablename__ = "monitor_state"
+
+    key: Mapped[str] = mapped_column(String(160), primary_key=True)  # panel | node:<uuid>
+    state: Mapped[str] = mapped_column(String(16), default="unknown")  # up|down|auth|disabled|unknown
+    display: Mapped[str] = mapped_column(String(160), default="")  # имя/адрес для алертов
+    detail: Mapped[str] = mapped_column(Text, default="")  # текст ошибки/состояния
+    down_since: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_alert_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utcnow, onupdate=_utcnow
+    )
+
+
+class MonitorEvent(Base):
+    """Алерты/восстановления мониторинга (показываются в «Боте» и в логах)."""
+
+    __tablename__ = "monitor_events"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    ts: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, index=True)
+    key: Mapped[str] = mapped_column(String(160), default="")  # panel | node:<uuid>
+    level: Mapped[str] = mapped_column(String(16), default="info")  # alert|recovery|warn|info
+    text: Mapped[str] = mapped_column(Text, default="")
+    sent_ok: Mapped[bool] = mapped_column(Boolean, default=False)  # доставлено в eXpress
+    recipients: Mapped[int] = mapped_column(Integer, default=0)
 
 
 class BotEvent(Base):
@@ -135,6 +167,23 @@ def init_db() -> None:
 
     Base.metadata.create_all(_engine)
     _SessionLocal = sessionmaker(bind=_engine, expire_on_commit=False, future=True)
+    _migrate()
+
+
+def _migrate() -> None:
+    """SQLite: create_all не меняет существующие таблицы — докинем колонки."""
+    global _engine
+    with _engine.connect() as conn:
+        cols = {row[1] for row in conn.exec_driver_sql("PRAGMA table_info(bot_config)")}
+        if "monitor_enabled" not in cols:
+            conn.exec_driver_sql(
+                "ALTER TABLE bot_config ADD COLUMN monitor_enabled BOOLEAN NOT NULL DEFAULT 1"
+            )
+        if "monitor_interval_min" not in cols:
+            conn.exec_driver_sql(
+                "ALTER TABLE bot_config ADD COLUMN monitor_interval_min INTEGER NOT NULL DEFAULT 5"
+            )
+        conn.commit()
 
 
 def get_engine():

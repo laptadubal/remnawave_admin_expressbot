@@ -345,6 +345,8 @@ async def bot_page(request: Request, user=Depends(get_current_user)):
         "bot_id": (cfg.bot_id if cfg else "") or "",
         "secret_set": secret_set,
         "huids": [h for h in allowed_raw.splitlines() if h.strip()],
+        "monitor_enabled": True if cfg is None else bool(cfg.monitor_enabled),
+        "monitor_interval_min": 5 if cfg is None else int(cfg.monitor_interval_min or 5),
         "updated_at": (cfg.updated_at if cfg else None),
     }
     db = session_factory()
@@ -355,7 +357,19 @@ async def bot_page(request: Request, user=Depends(get_current_user)):
     bot_frag = TEMPLATES.get_template("fragments/bot_events.html").render(
         {"request": request, "events": events, "limit": 30}
     )
-    return render("bot.html", request, user, "bot", config=config, bot_frag=bot_frag)
+    from ..db import MonitorEvent, MonitorState
+
+    db = session_factory()
+    try:
+        m_events = db.query(MonitorEvent).order_by(MonitorEvent.id.desc()).limit(40).all()
+        m_states = db.query(MonitorState).all()
+    finally:
+        db.close()
+    monitor_frag = TEMPLATES.get_template("fragments/monitor.html").render(
+        {"request": request, "events": m_events, "states": m_states}
+    )
+    return render("bot.html", request, user, "bot",
+                  config=config, bot_frag=bot_frag, monitor_frag=monitor_frag)
 
 
 @router.get("/settings")

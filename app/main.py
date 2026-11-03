@@ -7,6 +7,7 @@
 """
 from __future__ import annotations
 
+import asyncio
 import logging
 import secrets
 
@@ -41,14 +42,15 @@ def ensure_default_admin() -> None:
         password = s.admin_password
         if not password:
             password = "Rw" + secrets.token_urlsafe(12)
+            banner = "#" * 60
             logger.warning(
-                "=%" * 20 + "=%\n"
+                banner + "\n"
                 "Создан первый администратор админки:\n"
                 "  логин:   %s\n"
                 "  пароль:   %s\n"
                 "Пароль сгенерирован автоматически и печатается ОДИН раз.\n"
                 "Задайте ADMIN_PASSWORD в .env, если хотите свой.\n"
-                "=%" * 20 + "=%",
+                + banner,
                 s.admin_username, password,
             )
         db.add(AccessUser(
@@ -106,8 +108,26 @@ def _create_app() -> FastAPI:
     async def healthz():
         return JSONResponse({"ok": True, "version": __version__})
 
+    # --- фоновый мониторинг панели и нод (алерты в eXpress) ---
+    from .monitoring import MonitorEngine
+
+    engine = MonitorEngine(app.state.remna, app.state.bot, app.state.bot_provider)
+    app.state.monitor = engine
+
+    @app.on_event("startup")
+    async def _start_monitor():
+        app.state.monitor_task = asyncio.create_task(engine.run())
+        logger.info("monitor: фоновая проверка панели и нод запущена")
+
     @app.on_event("shutdown")
     async def _shutdown():
+        task = getattr(app.state, "monitor_task", None)
+        if task is not None:
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
         await app.state.remna.close()
 
     return app

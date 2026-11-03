@@ -1,0 +1,52 @@
+{% set panel_states = states|selectattr('key','equalto','panel')|list %}
+{% set panel_state = panel_states[0] if panel_states else none %}
+{% set nodes = states|selectattr('key','nodekey')|list %}
+{% set up_n = nodes|selectattr('state','equalto','up')|list|length %}
+{% set down_n = nodes|selectattr('state','equalto','down')|list|length %}
+{% set dis_n = nodes|selectattr('state','equalto','disabled')|list|length %}
+{% if panel_state is not none %}
+  <p class="dim" style="margin:0 0 10px">
+    {% if panel_state.state == 'up' %}
+      <span class="badge ok"><span class="d"></span>панель в сети</span>
+    {% elif panel_state.state == 'down' %}
+      <span class="badge down"><span class="d"></span>панель недоступна</span>
+    {% elif panel_state.state == 'auth' %}
+      <span class="badge muted"><span class="d"></span>панель: ошибка авторизации</span>
+    {% else %}
+      <span class="badge off"><span class="d"></span>панель: состояние неизвестно</span>
+    {% endif %}
+    {% if nodes %}
+      · ноды: <b>{{ up_n }}</b> в сети{% if down_n %}, <b style="color:var(--err)">{{ down_n }}</b> недоступно{% endif %}{% if dis_n %}, {{ dis_n }} выкл.{% endif %}
+    {% endif %}
+    {% if panel_state.detail %}<br><span class="mono dim">{{ panel_state.detail[:180] }}</span>{% endif %}
+  </p>
+{% else %}
+  <p class="dim" style="margin:0 0 10px">Мониторинг ещё не выполнил ни одной проверки.</p>
+{% endif %}
+
+<div class="tbl-wrap">
+  <table class="tbl" style="min-width:auto">
+    <thead><tr><th>Время (UTC)</th><th>Уровень</th><th>Событие</th><th>eXpress</th></tr></thead>
+    <tbody>
+    {% for ev in events %}
+      <tr>
+        <td class="mono">{{ ev.ts|pdate }}</td>
+        <td>
+          {% if ev.level == 'alert' %}<span class="badge down">🔴 алерт</span>
+          {% elif ev.level == 'recovery' %}<span class="badge ok">🟢 восстановлено</span>
+          {% elif ev.level == 'warn' %}<span class="badge muted">🟡 внимание</span>
+          {% else %}<span class="badge off">info</span>{% endif %}
+        </td>
+        <td class="mono" style="font-size:.8rem">{{ ev.text }}</td>
+        <td>
+          {% if ev.sent_ok %}<span class="badge ok">доставлено ×{{ ev.recipients }}</span>
+          {% elif ev.level in ('alert','recovery','warn') %}<span class="badge off" title="Бот не настроен или CTS недоступен">не доставлено</span>
+          {% else %}—{% endif %}
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="4"><div class="empty">Событий пока нет — при переходе ноды/панели в плохое состояние здесь появится алерт</div></td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
